@@ -217,6 +217,7 @@ def parse_autodoc(file_name):
 
         # parse page
         page = parse_page(exp_title, page_lines)
+        page.set_book(doc)
 
         # add to doc
         doc.add_page(exp_title, page)

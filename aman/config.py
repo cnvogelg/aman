@@ -6,16 +6,19 @@ JSON_VERSION = 1
 VERSION_TAG = "aman_config"
 MAN_PATHS_TAG = "man_paths"
 CACHE_DIR_TAG = "cache_dir"
+PAGER_TAG = "pager"
 
 AMAN_DEFAULT_CACHE_DIR = "~/.aman/cache"
 AMAN_ENV_PATH_VAR = "AMANPATH"
 AMAN_ENV_CACHE_VAR = "AMANCACHE"
+AMAN_ENV_PAGER_VAR = "PAGER"
 
 
 class Config:
     def __init__(self, config_file=None, use_env=True):
         self.man_paths = []
         self.cache_dir = None
+        self.pager = None
         self._set_default()
         if use_env:
             self._set_env()
@@ -35,6 +38,9 @@ class Config:
         # cache dir
         if AMAN_ENV_CACHE_VAR in os.environ:
             self.cache_dir = os.environ[AMAN_ENV_CACHE_VAR]
+        # pager
+        if AMAN_ENV_PAGER_VAR in os.environ:
+            self.pager = os.environ[AMAN_ENV_PAGER_VAR]
 
     def _load_config(self, config_file):
         logging.debug("config: loading '%s'", config_file)
@@ -56,6 +62,8 @@ class Config:
             self.man_paths = data[MAN_PATHS_TAG]
         if CACHE_DIR_TAG in data:
             self.cache_dir = data[CACHE_DIR_TAG]
+        if PAGER_TAG in data:
+            self.pager = data[PAGER_TAG]
         return True
 
     def add_man_path(self, man_path):
@@ -67,11 +75,17 @@ class Config:
     def set_cache_dir(self, cache_dir):
         self.cache_dir = cache_dir
 
+    def set_pager(self, pager):
+        self.pager = pager
+
     def get_cache_dir(self):
         return self.cache_dir
 
     def get_man_paths(self):
         return self.man_paths
+
+    def get_pager(self):
+        return self.pager
 
     def finalize(self):
         # ensure a man path

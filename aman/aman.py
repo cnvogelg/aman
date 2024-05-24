@@ -8,13 +8,14 @@ import logging
 from .autodoc import AutoDocSet
 from .index import PageIndices
 from .config import Config
+from .format import Format
 
 LOGGING_FORMAT = "%(message)s"
 AMAN_DEFAULT_CONFIG_FILE = "~/.aman/config.json"
 DESC = "read Amiga autodocs as man pages"
 
 
-def aman(config, keyword, force_rebuild=False, raw_page=False):
+def aman(config, keyword, fmt, force_rebuild=False, all_pages=False):
     cache_dir = config.get_cache_dir()
 
     # setup doc set
@@ -40,17 +41,18 @@ def aman(config, keyword, force_rebuild=False, raw_page=False):
         locs = entry.get_locs()
         if len(locs) == 1:
             # single match -> show page
-            loc = locs[0]
-            book, page = doc_set.resolve_book_page(loc)
-            if raw_page:
-                page.dump_raw()
-            else:
-                page.dump()
+            page = doc_set.resolve_page(locs[0])
+            fmt.format_page(page)
         else:
             # multiple matches -> list matches
-            for loc in locs:
-                book, page = doc_set.resolve_book_page(loc)
-                print(page.get_title())
+            pages = doc_set.resolve_pages(locs)
+            if all_pages:
+                # show pages one by one
+                for page in pages:
+                    fmt.format_page(page)
+            else:
+                # show page list
+                fmt.format_page_list(pages)
 
     return 0
 
@@ -63,9 +65,15 @@ def main():
     )
     parser.add_argument("-C", "--cache-dir", help="directory for cache files")
     parser.add_argument("-c", "--config-file", help="config file")
-    parser.add_argument("-r", "--raw-page", action="store_true", help="show raw page")
     parser.add_argument(
         "-f", "--force", action="store_true", help="force recreation of cache"
+    )
+    parser.add_argument("-n", "--no-pager", action="store_true", help="disable pager")
+    parser.add_argument("-P", "--pager", help="pager executable")
+    parser.add_argument("-j", "--json", action="store_true", help="output json format")
+    parser.add_argument("-r", "--raw-page", action="store_true", help="show raw page")
+    parser.add_argument(
+        "-a", "--all-pages", action="store_true", help="show multiple results as pages"
     )
     parser.add_argument(
         "-v", "--verbose", action="count", help="be more verbose", default=0
@@ -101,15 +109,26 @@ def main():
     if opts.cache_dir:
         config.set_cache_dir(opts.cache_dir)
 
+    # pager setting
+    if opts.no_pager:
+        config.set_pager(None)
+    elif opts.pager:
+        config.set_pager(opts.pager)
+
     # check config
     if not config.finalize():
         sys.exit(1)
 
+    # setup format
+    fmt = Format()
+    fmt.set_pager(config.get_pager())
+    if opts.raw_page:
+        fmt.set_output_format(Format.OUTPUT_FORMAT_RAW)
+    elif opts.json:
+        fmt.set_output_format(Format.OUTPUT_FORMAT_JSON)
+
     # call main
     result = aman(
-        config,
-        opts.keyword,
-        force_rebuild=opts.force,
-        raw_page=opts.raw_page,
+        config, opts.keyword, fmt, force_rebuild=opts.force, all_pages=opts.all_pages
     )
     sys.exit(result)

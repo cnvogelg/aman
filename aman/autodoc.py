@@ -158,10 +158,17 @@ class AutoDocSet:
             entry = self.index.search(key)
         return entry
 
-    def resolve_book_page(self, loc):
+    def resolve_page(self, loc):
         cache_id = loc.get_cache_id()
         doc = self.cache_doc_map[cache_id]
         book = doc.get_book()
         page = book.get_page(loc.get_page_title())
         logging.debug("reolve: %s -> %s %s", loc, book, page)
-        return book, page
+        return page
+
+    def resolve_pages(self, locs):
+        pages = []
+        for loc in locs:
+            page = self.resolve_page(loc)
+            pages.append(page)
+        return pages
