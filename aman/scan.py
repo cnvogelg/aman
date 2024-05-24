@@ -21,15 +21,17 @@ def scan_autodocs(base_dir, doc_class):
     return result
 
 
-def scan_cache(cache_dir, autodocs):
+def scan_cache(cache_dir, autodocs, zip):
     """scan the cache directory for the autodocs"""
     for adoc in autodocs:
         name = adoc.get_name()
         cache_file = os.path.join(cache_dir, name + ".json")
+        if zip:
+            cache_file += ".gz"
         if os.path.exists(cache_file):
             mtime = os.stat(cache_file).st_mtime
         else:
             mtime = 0
-        adoc.set_cache_file(cache_file, mtime)
+        adoc.set_cache_file(cache_file, mtime, zip)
         is_valid = adoc.is_cache_valid()
         logging.info("cache '%s' (mtime=%d) valid=%s", cache_file, mtime, is_valid)

@@ -26,14 +26,16 @@ def aman(man_paths, cache_dir, keyword, force_rebuild=False, raw_page=False):
 
     # setup doc set
     doc_set = AutoDocSet()
-    is_clean = doc_set.setup(man_paths, cache_dir, force_rebuild)
+    is_clean = doc_set.setup(
+        man_paths, cache_dir, force_rebuild=force_rebuild, zip_cache=True
+    )
 
     # setup search indices
     indices = PageIndices()
-    short_index = indices.add_short_title_index(cache_dir)
-    long_index = indices.add_long_title_index(cache_dir)
+    short_index = indices.add_short_title_index()
+    long_index = indices.add_long_title_index()
     force = not is_clean
-    indices.setup(doc_set, force)
+    indices.setup(doc_set, cache_dir, force_rebuild=force, zip_index=True)
 
     # search key
     entry = indices.search(keyword)

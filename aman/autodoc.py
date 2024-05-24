@@ -2,6 +2,7 @@ import os
 import logging
 import time
 import json
+import gzip
 
 from .parse import parse_autodoc
 from .scan import scan_autodocs, scan_cache
@@ -20,12 +21,14 @@ class AutoDoc:
         self.cache_path = None
         self.cache_mtime = 0
         self.cache_id = None
+        self.cache_zip = False
         self.book = None
 
-    def set_cache_file(self, cache_path, cache_mtime):
+    def set_cache_file(self, cache_path, cache_mtime, cache_zip):
         self.cache_path = cache_path
         self.cache_mtime = cache_mtime
         self.cache_id = os.path.basename(cache_path)
+        self.cache_zip = cache_zip
 
     def get_name(self):
         return self.name
@@ -75,13 +78,21 @@ class AutoDoc:
 
     def _save_cache(self):
         data = {VERSION_TAG: JSON_VERSION, "book": self.book.to_json()}
-        with open(self.cache_path, "w") as fh:
-            json.dump(data, fh)
+        if self.cache_zip:
+            with gzip.open(self.cache_path, "wt") as fh:
+                json.dump(data, fh)
+        else:
+            with open(self.cache_path, "w") as fh:
+                json.dump(data, fh)
 
     def _load_cache(self):
         start = time.monotonic()
-        with open(self.cache_path) as fh:
-            data = json.load(fh)
+        if self.cache_zip:
+            with gzip.open(self.cache_path, "rt") as fh:
+                data = json.load(fh)
+        else:
+            with open(self.cache_path) as fh:
+                data = json.load(fh)
         # check version
         if VERSION_TAG not in data:
             return False
@@ -111,7 +122,7 @@ class AutoDocSet:
     def get_docs(self):
         return self.docs
 
-    def setup(self, doc_paths, cache_dir, force_rebuild):
+    def setup(self, doc_paths, cache_dir, force_rebuild=False, zip_cache=False):
         start = time.monotonic()
 
         # scan for autodocs
@@ -120,7 +131,7 @@ class AutoDocSet:
 
         # scan the cache
         self.cache_dir = cache_dir
-        scan_cache(cache_dir, self.docs)
+        scan_cache(cache_dir, self.docs, zip=zip_cache)
 
         # setup cache
         all_valid = True

@@ -2,6 +2,7 @@ import os
 import time
 import json
 import logging
+import gzip
 
 JSON_VERSION = 1
 VERSION_TAG = "index_version"
@@ -57,15 +58,24 @@ class IndexEntry:
 
 
 class PageIndex:
-    def __init__(self, index_id, index_file, keys_func):
+    def __init__(self, index_id, keys_func):
         self.index_id = index_id
-        self.index_file = index_file
         self.keys_func = keys_func
         self.index = None
+        self.index_file = None
+        self.index_zip = False
 
-    def setup(self, docs, force):
+    def setup(self, docs, index_dir, force_rebuild=False, zip_index=False):
+        # set cache file name
+        index_name = "_index_" + self.index_id + ".json"
+        if zip_index:
+            index_name += ".gz"
+        index_file = os.path.join(index_dir, index_name)
+        self.index_file = index_file
+        self.index_zip = zip_index
+        # load or rebuild+save index
         ok = False
-        if not force and os.path.exists(self.index_file):
+        if not force_rebuild and os.path.exists(self.index_file):
             ok = self._load_index()
         if not ok:
             self._rebuild_index(docs)
@@ -79,8 +89,12 @@ class PageIndex:
     def _load_index(self):
         start = time.monotonic()
 
-        with open(self.index_file) as fh:
-            data = json.load(fh)
+        if self.index_zip:
+            with gzip.open(self.index_file, "rt") as fh:
+                data = json.load(fh)
+        else:
+            with open(self.index_file) as fh:
+                data = json.load(fh)
         # check version
         if VERSION_TAG not in data:
             return False
@@ -93,7 +107,7 @@ class PageIndex:
             self.index[key] = entry
 
         end = time.monotonic()
-        logging.info("loaded index '%s' in %.6f", self.index_id, end - start)
+        logging.info("loaded index '%s' in %.6f", self.index_file, end - start)
         return True
 
     def _save_index(self):
@@ -104,11 +118,15 @@ class PageIndex:
             index[key] = entry.to_json()
         data = {VERSION_TAG: JSON_VERSION, "index": index}
 
-        with open(self.index_file, "w") as fh:
-            json.dump(data, fh)
+        if self.index_zip:
+            with gzip.open(self.index_file, "wt") as fh:
+                json.dump(data, fh)
+        else:
+            with open(self.index_file, "w") as fh:
+                json.dump(data, fh)
 
         end = time.monotonic()
-        logging.info("saved index '%s' in %.6f", self.index_id, end - start)
+        logging.info("saved index '%s' in %.6f", self.index_file, end - start)
 
     def _rebuild_index(self, docs):
         start = time.monotonic()
@@ -153,34 +171,34 @@ class PageIndices:
     def add_index(self, index):
         self.indices.append(index)
 
-    def add_long_title_index(self, index_dir):
+    def add_long_title_index(self):
         def key_long_title(page):
             return [page.get_title()]
 
-        index_file = os.path.join(index_dir, "_long_title_index.json")
-        index = PageIndex("long_title", index_file, key_long_title)
+        index = PageIndex("long_title", key_long_title)
         self.add_index(index)
         return index
 
-    def add_short_title_index(self, index_dir):
+    def add_short_title_index(self):
         def key_short_title(page):
             title = page.get_title()
             _, short = title.split("/")
             return [short]
 
-        index_file = os.path.join(index_dir, "_short_title_index.json")
-        index = PageIndex("short_title", index_file, key_short_title)
+        index = PageIndex("short_title", key_short_title)
         self.add_index(index)
         return index
 
-    def setup(self, doc_set, force):
+    def setup(self, doc_set, index_dir, force_rebuild=False, zip_index=False):
         num_entries = 0
         num_indices = 0
         docs = doc_set.get_docs()
         start = time.monotonic()
 
         for index in self.indices:
-            num_entries += index.setup(docs, force)
+            num_entries += index.setup(
+                docs, index_dir, force_rebuild=force_rebuild, zip_index=zip_index
+            )
             num_indices += 1
 
         end = time.monotonic()
@@ -189,7 +207,7 @@ class PageIndices:
             num_indices,
             num_entries,
             end - start,
-            force,
+            force_rebuild,
         )
 
     def search(self, key):
