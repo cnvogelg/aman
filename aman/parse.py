@@ -115,6 +115,7 @@ def parse_page(title, lines):
 
     sec_name = ""
     sec_lines = []
+    header_indent = 0
 
     # split into sections
     for line in lines:
@@ -127,10 +128,21 @@ def parse_page(title, lines):
             # try to get a new section header
             header = get_section_header(line, indent)
             if header:
-                add_section(page, sec_name, sec_lines)
-                # start new section
-                sec_name = header
-                sec_lines = []
+                if header_indent == 0:
+                    # on first section keep header indent
+                    header_indent = indent
+                    logging.debug("section indent=%s", header_indent)
+                else:
+                    # otherwise check if indent matches
+                    if indent == header_indent:
+                        add_section(page, sec_name, sec_lines)
+                        # start new section
+                        sec_name = header
+                        sec_lines = []
+                    else:
+                        # no seems to be no section header
+                        sec_lines.append(line)
+                        logging.debug("no section header: '%s'", header)
             else:
                 # append to current section
                 sec_lines.append(line)
