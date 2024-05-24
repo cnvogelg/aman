@@ -1,0 +1,1 @@
+from .aman import main
