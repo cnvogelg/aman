@@ -8,25 +8,27 @@ VERSION_TAG = "index_version"
 
 
 class IndexLoc:
-    def __init__(self, cache_id, page_num):
+    def __init__(self, cache_id, page_title):
         self.cache_id = cache_id
-        self.page_num = page_num
+        self.page_title = page_title
 
     def __repr__(self):
-        return f"IndexLoc({self.cache_id, self.page_num})"
+        return f"IndexLoc({self.cache_id, self.page_title})"
 
     def get_cache_id(self):
         return self.cache_id
 
-    def get_page_num(self):
-        return self.page_num
+    def get_page_title(self):
+        return self.page_title
 
     def to_json(self):
-        return [self.cache_id, self.page_num]
+        return {"cache_id": self.cache_id, "page_title": self.page_title}
 
     @staticmethod
     def from_json(data):
-        return IndexLoc(data[0], data[1])
+        cache_id = data["cache_id"]
+        page_title = data["page_title"]
+        return IndexLoc(cache_id, page_title)
 
 
 class IndexEntry:
@@ -55,10 +57,10 @@ class IndexEntry:
 
 
 class PageIndex:
-    def __init__(self, index_id, index_file, key_func):
+    def __init__(self, index_id, index_file, keys_func):
         self.index_id = index_id
         self.index_file = index_file
-        self.key_func = key_func
+        self.keys_func = keys_func
         self.index = None
 
     def setup(self, docs, force):
@@ -112,29 +114,34 @@ class PageIndex:
         start = time.monotonic()
 
         self.index = {}
+        num_keys = 0
         num_pages = 0
         for doc in docs:
             book = doc.get_book()
-            page_num = 0
             for page in book.get_pages().values():
                 # build index entry: cache file base name + page num in cache
                 cache_id = doc.get_cache_id()
-                loc = IndexLoc(cache_id, page_num)
-                # generate key via key_func from page
-                key = self.key_func(page)
-                # new key?
-                entry = self.index.get(key)
-                if not entry:
-                    entry = IndexEntry()
-                    self.index[key] = entry
-                entry.add(loc)
-                page_num += 1
+                page_title = page.get_title()
+                loc = IndexLoc(cache_id, page_title)
+                # generate keys via key_func from page
+                keys = self.keys_func(page)
+                # add keys
+                for key in keys:
+                    # new key?
+                    entry = self.index.get(key)
+                    if not entry:
+                        entry = IndexEntry()
+                        self.index[key] = entry
+                    entry.add(loc)
+                    num_keys += 1
+                num_pages += 1
 
         end = time.monotonic()
         logging.info(
-            "rebuild index '%s' with %s pages in %.6f",
+            "rebuild index '%s' with %s pages and %s keys in %.6f",
             self.index_id,
-            page_num,
+            num_pages,
+            num_keys,
             end - start,
         )
 
@@ -148,7 +155,7 @@ class PageIndices:
 
     def add_long_title_index(self, index_dir):
         def key_long_title(page):
-            return page.get_title()
+            return [page.get_title()]
 
         index_file = os.path.join(index_dir, "_long_title_index.json")
         index = PageIndex("long_title", index_file, key_long_title)
@@ -159,7 +166,7 @@ class PageIndices:
         def key_short_title(page):
             title = page.get_title()
             _, short = title.split("/")
-            return short
+            return [short]
 
         index_file = os.path.join(index_dir, "_short_title_index.json")
         index = PageIndex("short_title", index_file, key_short_title)

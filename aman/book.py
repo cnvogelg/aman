@@ -20,9 +20,6 @@ class AutoDocBook:
     def get_page(self, title):
         return self.pages[title]
 
-    def get_page_at(self, page_num):
-        return self.pages[self.toc[page_num]]
-
     def get_pages(self):
         return self.pages
 

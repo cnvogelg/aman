@@ -45,7 +45,8 @@ def aman(man_paths, cache_dir, keyword, force_rebuild=False, raw_page=False):
         locs = entry.get_locs()
         if len(locs) == 1:
             # single match -> show page
-            book, page = doc_set.resolve_book_page(locs[0])
+            loc = locs[0]
+            book, page = doc_set.resolve_book_page(loc)
             if raw_page:
                 page.dump_raw()
             else:

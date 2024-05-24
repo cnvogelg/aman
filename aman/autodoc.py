@@ -151,5 +151,6 @@ class AutoDocSet:
         cache_id = loc.get_cache_id()
         doc = self.cache_doc_map[cache_id]
         book = doc.get_book()
-        page = book.get_page_at(loc.get_page_num())
+        page = book.get_page(loc.get_page_title())
+        logging.debug("reolve: %s -> %s %s", loc, book, page)
         return book, page
