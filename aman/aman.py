@@ -7,27 +7,20 @@ import logging
 
 from .autodoc import AutoDocSet
 from .index import PageIndices
+from .config import Config
 
 LOGGING_FORMAT = "%(message)s"
-AMAN_PATH_VAR = "AMANPATH"
-AMAN_CACHE_VAR = "AMANCACHE"
-AMAN_DEFAULT_CACHE_DIR = "~/.aman/cache"
+AMAN_DEFAULT_CONFIG_FILE = "~/.aman/config.json"
 DESC = "read Amiga autodocs as man pages"
 
 
-def aman(man_paths, cache_dir, keyword, force_rebuild=False, raw_page=False):
-    logging.info(
-        "man_paths=%s, cache_dir=%s, keyword=%s", man_paths, cache_dir, keyword
-    )
-
-    # ensure cache dir
-    if not os.path.isdir(cache_dir):
-        os.makedirs(cache_dir)
+def aman(config, keyword, force_rebuild=False, raw_page=False):
+    cache_dir = config.get_cache_dir()
 
     # setup doc set
     doc_set = AutoDocSet()
     is_clean = doc_set.setup(
-        man_paths, cache_dir, force_rebuild=force_rebuild, zip_cache=True
+        config.get_man_paths(), cache_dir, force_rebuild=force_rebuild, zip_cache=True
     )
 
     # setup search indices
@@ -68,7 +61,8 @@ def main():
     parser.add_argument(
         "-M", "--man-path", help="Define the paths of the Amiga autodocs"
     )
-    parser.add_argument("-c", "--cache-dir", help="directory for cache files")
+    parser.add_argument("-C", "--cache-dir", help="directory for cache files")
+    parser.add_argument("-c", "--config-file", help="config file")
     parser.add_argument("-r", "--raw-page", action="store_true", help="show raw page")
     parser.add_argument(
         "-f", "--force", action="store_true", help="force recreation of cache"
@@ -88,31 +82,32 @@ def main():
         level = logging.DEBUG
     logging.basicConfig(format=LOGGING_FORMAT, level=level)
 
-    # get man path
-    if opts.man_path:
-        man_path = opts.man_path
-    elif AMAN_PATH_VAR in os.environ:
-        man_path = os.environ[AMAN_PATH_VAR]
+    # locate config file
+    if opts.config_file:
+        config_file = opts.config_file
     else:
-        logging.error(
-            "No path for autodocs given. Set env var %s or use -M option", AMAN_PATH_VAR
-        )
-        sys.exit(1)
-    # split multiple paths
-    man_paths = man_path.split(os.pathsep)
+        config_file = os.path.expanduser(AMAN_DEFAULT_CONFIG_FILE)
 
-    # get cache dir
+    # setu config from file and env
+    config = Config(config_file=config_file, use_env=True)
+
+    # apply options from command line
+    if opts.man_path:
+        man_paths = opts.man_path.split(os.pathsep)
+        config.set_man_paths(man_paths)
+        man_path = opts.man_path
+
+    # cache dir
     if opts.cache_dir:
-        cache_dir = opts.cache_dir
-    elif AMAN_CACHE_VAR in os.environ:
-        cache_dir = os.environ[AMAN_PATH_VAR]
-    else:
-        cache_dir = os.path.expanduser(AMAN_DEFAULT_CACHE_DIR)
+        config.set_cache_dir(opts.cache_dir)
+
+    # check config
+    if not config.finalize():
+        sys.exit(1)
 
     # call main
     result = aman(
-        man_paths,
-        cache_dir,
+        config,
         opts.keyword,
         force_rebuild=opts.force,
         raw_page=opts.raw_page,
