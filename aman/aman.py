@@ -27,6 +27,24 @@ def aman(man_paths, cache_dir, keyword, force_rebuild):
     doc_set = AutoDocSet()
     doc_set.setup(man_paths, cache_dir, force_rebuild)
 
+    # search key
+    entry = doc_set.search(keyword)
+    if not entry:
+        # no entry
+        print(f"no entry found for '{keyword}'")
+    else:
+        # get locations
+        locs = entry.get_locs()
+        if len(locs) == 1:
+            # single match -> show page
+            book, page = doc_set.resolve_book_page(locs[0])
+            page.dump()
+        else:
+            # multiple matches -> list matches
+            for loc in locs:
+                book, page = doc_set.resolve_book_page(loc)
+                print(page.get_title())
+
     return 0
 
 

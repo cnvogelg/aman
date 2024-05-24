@@ -4,6 +4,9 @@ class AutoDocBook:
         self.toc = []
         self.pages = {}
 
+    def __repr__(self):
+        return f"AutoDocBook({self.file_name},#toc={len(self.toc)})"
+
     def add_page(self, title, page):
         self.toc.append(title)
         self.pages[title] = page
@@ -16,6 +19,9 @@ class AutoDocBook:
 
     def get_page(self, title):
         return self.pages[title]
+
+    def get_page_at(self, page_num):
+        return self.pages[self.toc[page_num]]
 
     def get_pages(self):
         return self.pages
@@ -39,7 +45,7 @@ class AutoDocBook:
             ok = page.from_json(page_data[title])
             if not ok:
                 return False
-            self.pages[page] = page
+            self.pages[title] = page
         return True
 
 
@@ -49,9 +55,23 @@ class AutoDocPage:
         self.toc = []
         self.sections = {}
 
+    def __repr__(self):
+        return f"AutoDocPage({self.title},#toc={len(self.toc)})"
+
+    def dump(self, p=print):
+        p(self.title)
+        p()
+        for section in self.toc:
+            p(section)
+            for line in self.sections[section]:
+                p("\t" + line)
+
     def add_section(self, title, lines):
         self.toc.append(title)
         self.sections[title] = lines
+
+    def get_title(self):
+        return self.title
 
     def get_toc(self):
         return self.toc
