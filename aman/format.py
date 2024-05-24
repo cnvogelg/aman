@@ -3,6 +3,7 @@ import os
 import subprocess
 import logging
 import sys
+import shlex
 from termcolor import colored
 
 
@@ -27,7 +28,9 @@ class PrinterFile:
 
 class PrinterPager:
     def __init__(self, pager):
-        self.proc = subprocess.Popen(pager, stdin=subprocess.PIPE, text=True)
+        cmd_line = shlex.split(pager)
+        logging.info("launching pager: %s", cmd_line)
+        self.proc = subprocess.Popen(cmd_line, stdin=subprocess.PIPE, text=True)
 
     def write(self, data):
         self.proc.communicate(input=data)

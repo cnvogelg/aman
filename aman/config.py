@@ -11,6 +11,7 @@ PAGER_TAG = "pager"
 AMAN_DEFAULT_CACHE_DIR = "~/.aman/cache"
 AMAN_ENV_PATH_VAR = "AMANPATH"
 AMAN_ENV_CACHE_VAR = "AMANCACHE"
+AMAN_ENV_MANPAGER_VAR = "MANPAGER"
 AMAN_ENV_PAGER_VAR = "PAGER"
 
 
@@ -41,6 +42,8 @@ class Config:
         # pager
         if AMAN_ENV_PAGER_VAR in os.environ:
             self.pager = os.environ[AMAN_ENV_PAGER_VAR]
+        if AMAN_ENV_MANPAGER_VAR in os.environ:
+            self.pager = os.environ[AMAN_ENV_MANPAGER_VAR]
 
     def _load_config(self, config_file):
         logging.debug("config: loading '%s'", config_file)
