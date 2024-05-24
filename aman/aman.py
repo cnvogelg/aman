@@ -6,6 +6,7 @@ import sys
 import logging
 
 from .autodoc import AutoDocSet
+from .index import PageIndices
 
 LOGGING_FORMAT = "%(message)s"
 AMAN_PATH_VAR = "AMANPATH"
@@ -14,7 +15,7 @@ AMAN_DEFAULT_CACHE_DIR = "~/.aman/cache"
 DESC = "read Amiga autodocs as man pages"
 
 
-def aman(man_paths, cache_dir, keyword, force_rebuild):
+def aman(man_paths, cache_dir, keyword, force_rebuild=False, raw_page=False):
     logging.info(
         "man_paths=%s, cache_dir=%s, keyword=%s", man_paths, cache_dir, keyword
     )
@@ -25,10 +26,17 @@ def aman(man_paths, cache_dir, keyword, force_rebuild):
 
     # setup doc set
     doc_set = AutoDocSet()
-    doc_set.setup(man_paths, cache_dir, force_rebuild)
+    is_clean = doc_set.setup(man_paths, cache_dir, force_rebuild)
+
+    # setup search indices
+    indices = PageIndices()
+    short_index = indices.add_short_title_index(cache_dir)
+    long_index = indices.add_long_title_index(cache_dir)
+    force = not is_clean
+    indices.setup(doc_set, force)
 
     # search key
-    entry = doc_set.search(keyword)
+    entry = indices.search(keyword)
     if not entry:
         # no entry
         print(f"no entry found for '{keyword}'")
@@ -38,7 +46,10 @@ def aman(man_paths, cache_dir, keyword, force_rebuild):
         if len(locs) == 1:
             # single match -> show page
             book, page = doc_set.resolve_book_page(locs[0])
-            page.dump()
+            if raw_page:
+                page.dump_raw()
+            else:
+                page.dump()
         else:
             # multiple matches -> list matches
             for loc in locs:
@@ -55,20 +66,23 @@ def main():
         "-M", "--man-path", help="Define the paths of the Amiga autodocs"
     )
     parser.add_argument("-c", "--cache-dir", help="directory for cache files")
+    parser.add_argument("-r", "--raw-page", action="store_true", help="show raw page")
     parser.add_argument(
         "-f", "--force", action="store_true", help="force recreation of cache"
     )
     parser.add_argument(
-        "-d", "--debug", action="store_true", help="enabled debug output"
+        "-v", "--verbose", action="count", help="be more verbose", default=0
     )
     parser.add_argument("keyword", help="keyword to search for")
     opts = parser.parse_args()
 
     # setup logging
-    if opts.debug:
-        level = logging.DEBUG
-    else:
+    if opts.verbose == 0:
         level = logging.WARNING
+    elif opts.verbose == 1:
+        level = logging.INFO
+    else:
+        level = logging.DEBUG
     logging.basicConfig(format=LOGGING_FORMAT, level=level)
 
     # get man path
@@ -93,5 +107,11 @@ def main():
         cache_dir = os.path.expanduser(AMAN_DEFAULT_CACHE_DIR)
 
     # call main
-    result = aman(man_paths, cache_dir, opts.keyword, opts.force)
+    result = aman(
+        man_paths,
+        cache_dir,
+        opts.keyword,
+        force_rebuild=opts.force,
+        raw_page=opts.raw_page,
+    )
     sys.exit(result)

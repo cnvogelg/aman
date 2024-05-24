@@ -55,18 +55,18 @@ class IndexEntry:
 
 
 class PageIndex:
-    def __init__(self, index_file, docs, key_func):
+    def __init__(self, index_id, index_file, key_func):
+        self.index_id = index_id
         self.index_file = index_file
-        self.docs = docs
         self.key_func = key_func
         self.index = None
 
-    def setup(self, force):
+    def setup(self, docs, force):
         ok = False
         if not force and os.path.exists(self.index_file):
             ok = self._load_index()
         if not ok:
-            self._rebuild_index()
+            self._rebuild_index(docs)
             self._save_index()
         # return entries
         return len(self.index)
@@ -91,7 +91,7 @@ class PageIndex:
             self.index[key] = entry
 
         end = time.monotonic()
-        logging.info("loaded index in %.6f", end - start)
+        logging.info("loaded index '%s' in %.6f", self.index_id, end - start)
         return True
 
     def _save_index(self):
@@ -106,14 +106,14 @@ class PageIndex:
             json.dump(data, fh)
 
         end = time.monotonic()
-        logging.info("saved index in %.6f", end - start)
+        logging.info("saved index '%s' in %.6f", self.index_id, end - start)
 
-    def _rebuild_index(self):
+    def _rebuild_index(self, docs):
         start = time.monotonic()
 
         self.index = {}
         num_pages = 0
-        for doc in self.docs:
+        for doc in docs:
             book = doc.get_book()
             page_num = 0
             for page in book.get_pages().values():
@@ -131,4 +131,62 @@ class PageIndex:
                 page_num += 1
 
         end = time.monotonic()
-        logging.info("rebuild index with %s pages in %.6f", page_num, end - start)
+        logging.info(
+            "rebuild index '%s' with %s pages in %.6f",
+            self.index_id,
+            page_num,
+            end - start,
+        )
+
+
+class PageIndices:
+    def __init__(self):
+        self.indices = []
+
+    def add_index(self, index):
+        self.indices.append(index)
+
+    def add_long_title_index(self, index_dir):
+        def key_long_title(page):
+            return page.get_title()
+
+        index_file = os.path.join(index_dir, "_long_title_index.json")
+        index = PageIndex("long_title", index_file, key_long_title)
+        self.add_index(index)
+        return index
+
+    def add_short_title_index(self, index_dir):
+        def key_short_title(page):
+            title = page.get_title()
+            _, short = title.split("/")
+            return short
+
+        index_file = os.path.join(index_dir, "_short_title_index.json")
+        index = PageIndex("short_title", index_file, key_short_title)
+        self.add_index(index)
+        return index
+
+    def setup(self, doc_set, force):
+        num_entries = 0
+        num_indices = 0
+        docs = doc_set.get_docs()
+        start = time.monotonic()
+
+        for index in self.indices:
+            num_entries += index.setup(docs, force)
+            num_indices += 1
+
+        end = time.monotonic()
+        logging.info(
+            "setup %d indices with %s entries in %.6f (forced=%s)",
+            num_indices,
+            num_entries,
+            end - start,
+            force,
+        )
+
+    def search(self, key):
+        for index in self.indices:
+            entry = index.search(key)
+            if entry:
+                return entry

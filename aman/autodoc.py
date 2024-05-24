@@ -108,6 +108,9 @@ class AutoDocSet:
     def add_doc(self, doc):
         self.doc.append(doc)
 
+    def get_docs(self):
+        return self.docs
+
     def setup(self, doc_paths, cache_dir, force_rebuild):
         start = time.monotonic()
 
@@ -134,34 +137,6 @@ class AutoDocSet:
             num_books,
             end - start,
             all_valid,
-        )
-
-        # prepare index
-        def key_title(page):
-            return page.get_title()
-
-        def key_short_title(page):
-            title = page.get_title()
-            _, short = title.split("/")
-            return short
-
-        start = time.monotonic()
-        force_index = not all_valid
-
-        index_file = os.path.join(cache_dir, "_index.json")
-        self.index = PageIndex(index_file, self.docs, key_title)
-        num_entries = self.index.setup(force_index)
-
-        short_index_file = os.path.join(cache_dir, "_short_index.json")
-        self.short_index = PageIndex(short_index_file, self.docs, key_short_title)
-        num_entries += self.short_index.setup(force_index)
-
-        end = time.monotonic()
-        logging.info(
-            "setup index with %s entries in %.6f (forced=%s)",
-            num_entries,
-            end - start,
-            force_index,
         )
 
         return all_valid

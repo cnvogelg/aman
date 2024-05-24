@@ -52,6 +52,7 @@ class AutoDocBook:
 class AutoDocPage:
     def __init__(self, title):
         self.title = title
+        self.raw_page = None
         self.toc = []
         self.sections = {}
 
@@ -65,13 +66,24 @@ class AutoDocPage:
             p(section)
             for line in self.sections[section]:
                 p("\t" + line)
+            p()
+
+    def dump_raw(self, p=print):
+        p(self.title)
+        p(self.raw_page)
 
     def add_section(self, title, lines):
         self.toc.append(title)
         self.sections[title] = lines
 
+    def set_raw_page(self, raw_page):
+        self.raw_page = raw_page
+
     def get_title(self):
         return self.title
+
+    def get_raw_page(self):
+        return self.raw_page
 
     def get_toc(self):
         return self.toc
@@ -83,14 +95,17 @@ class AutoDocPage:
         return self.sections
 
     def to_json(self):
-        return {"toc": self.toc, "sections": self.sections}
+        return {"toc": self.toc, "sections": self.sections, "raw_page": self.raw_page}
 
     def from_json(self, data):
         if "toc" not in data:
             return False
         if "sections" not in data:
             return False
+        if "raw_page" not in data:
+            return False
         self.toc = data["toc"]
+        self.raw_page = data["raw_page"]
         self.sections = {}
         sections_data = data["sections"]
         for title in self.toc:

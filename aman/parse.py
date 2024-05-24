@@ -1,3 +1,5 @@
+import logging
+
 from .book import AutoDocBook, AutoDocPage
 
 
@@ -44,19 +46,22 @@ def remove_empty_sec_lines(sec_lines):
     # empty?
     if len(sec_lines) == 0:
         return result
+
     # first non-empty
     begin = 0
     for line in sec_lines:
         if len(line) > 0:
             break
         begin += 1
+
     # last non empty
     last = len(sec_lines) - 1
     for line in reversed(sec_lines):
         if len(line) > 0:
             break
         last -= 1
-    return sec_lines[begin:last]
+
+    return sec_lines[begin : last + 1]
 
 
 def get_min_indent(lines):
@@ -86,10 +91,27 @@ def deindent_sec_lines(sec_lines):
     return result
 
 
+def add_section(page, sec_name, sec_lines):
+    # add current first
+    sec_lines = remove_empty_sec_lines(sec_lines)
+    if len(sec_lines) > 0:
+        sec_lines = deindent_sec_lines(sec_lines)
+        page.add_section(sec_name, sec_lines)
+        logging.debug("add section '%s' with %d lines", sec_name, len(sec_lines))
+    # keep empty names sections
+    elif sec_name != "":
+        page.add_section(sec_name, [])
+        logging.debug("add empty section '%s'", sec_name)
+
+
 def parse_page(title, lines):
     """parse lines of a page and extract sections"""
 
     page = AutoDocPage(title)
+
+    # keep raw page
+    raw_page = "\n".join(lines)
+    page.set_raw_page(raw_page)
 
     sec_name = ""
     sec_lines = []
@@ -105,17 +127,16 @@ def parse_page(title, lines):
             # try to get a new section header
             header = get_section_header(line, indent)
             if header:
-                # add current first
-                sec_lines = remove_empty_sec_lines(sec_lines)
-                if len(sec_lines) > 0:
-                    sec_lines = deindent_sec_lines(sec_lines)
-                    page.add_section(sec_name, sec_lines)
+                add_section(page, sec_name, sec_lines)
                 # start new section
                 sec_name = header
                 sec_lines = []
             else:
                 # append to current section
                 sec_lines.append(line)
+
+    # add last section
+    add_section(page, sec_name, sec_lines)
 
     return page
 
