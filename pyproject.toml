@@ -18,6 +18,9 @@ classifiers = [
     "Topic :: System :: Emulators",
 ]
 dynamic = ["version", "readme"]
+dependencies = [
+    "termcolor"
+]
 
 [tool.setuptools]
 zip-safe = true

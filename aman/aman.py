@@ -75,6 +75,10 @@ def main():
     parser.add_argument(
         "-a", "--all-pages", action="store_true", help="show multiple results as pages"
     )
+    parser.add_argument("--color", action="store_true", help="use colorful output")
+    parser.add_argument(
+        "--no-color", action="store_true", help="disable colorful output"
+    )
     parser.add_argument(
         "-v", "--verbose", action="count", help="be more verbose", default=0
     )
@@ -126,6 +130,15 @@ def main():
         fmt.set_output_format(Format.OUTPUT_FORMAT_RAW)
     elif opts.json:
         fmt.set_output_format(Format.OUTPUT_FORMAT_JSON)
+    # colorize?
+    if opts.color:
+        fmt.set_color(True)
+    elif opts.no_color:
+        fmt.set_color(False)
+    else:
+        # check terminal
+        colorize = sys.stdout.isatty()
+        fmt.set_color(colorize)
 
     # call main
     result = aman(

@@ -3,6 +3,7 @@ import os
 import subprocess
 import logging
 import sys
+from termcolor import colored
 
 
 class PrinterStdout:
@@ -42,6 +43,22 @@ class FormatterMono:
         return data
 
 
+class FormatterColor:
+    def format_page(self, page):
+        lines = []
+        title = colored(page.get_title(), attrs=["bold"])
+        lines.append(title)
+        lines.append("")
+        for section in page.get_toc():
+            sec_name = colored(section, attrs=["bold"])
+            lines.append(sec_name)
+            for line in page.get_section(section):
+                lines.append("\t" + line)
+            lines.append("")
+        data = os.linesep.join(lines)
+        return data
+
+
 class Format:
     OUTPUT_FORMAT_TEXT = 0
     OUTPUT_FORMAT_RAW = 1
@@ -51,6 +68,7 @@ class Format:
         self.output_file = None
         self.output_format = self.OUTPUT_FORMAT_TEXT
         self.pager = None
+        self.color = False
 
     def set_output_format(self, output_format):
         self.output_format = output_format
@@ -60,6 +78,9 @@ class Format:
 
     def set_pager(self, pager):
         self.pager = pager
+
+    def set_color(self, color):
+        self.color = color
 
     def _create_printer(self):
         if self.output_file:
@@ -95,4 +116,7 @@ class Format:
         printer.close()
 
     def _create_formatter(self):
-        return FormatterMono()
+        if self.color:
+            return FormatterColor()
+        else:
+            return FormatterMono()
