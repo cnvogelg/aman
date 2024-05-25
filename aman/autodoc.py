@@ -117,10 +117,15 @@ class AutoDocSet:
         self.cache_doc_map = {}
 
     def add_doc(self, doc):
-        self.doc.append(doc)
+        self.docs.append(doc)
 
     def get_docs(self):
         return self.docs
+
+    def find_doc(self, name):
+        for doc in self.docs:
+            if doc.get_name() == name:
+                return doc
 
     def setup(self, doc_paths, cache_dir, force_rebuild=False, zip_cache=False):
         start = time.monotonic()
@@ -152,23 +157,17 @@ class AutoDocSet:
 
         return all_valid
 
-    def search(self, key):
-        entry = self.short_index.search(key)
-        if not entry:
-            entry = self.index.search(key)
-        return entry
-
-    def resolve_page(self, loc):
-        cache_id = loc.get_cache_id()
+    def resolve_page_ref(self, page_ref):
+        cache_id = page_ref.get_cache_id()
         doc = self.cache_doc_map[cache_id]
         book = doc.get_book()
-        page = book.get_page(loc.get_page_title())
-        logging.debug("reolve: %s -> %s %s", loc, book, page)
+        page = book.get_page(page_ref.get_page_title())
+        logging.debug("reolve: %s -> %s %s", page_ref, book, page)
         return page
 
-    def resolve_pages(self, locs):
+    def resolve_pages(self, page_refs):
         pages = []
-        for loc in locs:
-            page = self.resolve_page(loc)
+        for page_ref in page_refs:
+            page = self.resolve_page_ref(page_ref)
             pages.append(page)
         return pages

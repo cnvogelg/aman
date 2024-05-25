@@ -8,13 +8,13 @@ JSON_VERSION = 1
 VERSION_TAG = "index_version"
 
 
-class IndexLoc:
+class IndexPageRef:
     def __init__(self, cache_id, page_title):
         self.cache_id = cache_id
         self.page_title = page_title
 
     def __repr__(self):
-        return f"IndexLoc({self.cache_id, self.page_title})"
+        return f"IndexPageRef({self.cache_id, self.page_title})"
 
     def get_cache_id(self):
         return self.cache_id
@@ -29,31 +29,31 @@ class IndexLoc:
     def from_json(data):
         cache_id = data["cache_id"]
         page_title = data["page_title"]
-        return IndexLoc(cache_id, page_title)
+        return IndexPageRef(cache_id, page_title)
 
 
 class IndexEntry:
     def __init__(self):
-        self.locs = []
+        self.page_refs = []
 
     def __repr__(self):
-        return f"IndexEntry({self.locs})"
+        return f"IndexEntry({self.page_refs})"
 
-    def add(self, loc):
-        self.locs.append(loc)
+    def add_page_ref(self, page_ref):
+        self.page_refs.append(page_ref)
 
-    def get_locs(self):
-        return self.locs
+    def get_page_refs(self):
+        return self.page_refs
 
     def to_json(self):
-        return list(map(lambda x: x.to_json(), self.locs))
+        return list(map(lambda x: x.to_json(), self.page_refs))
 
     @staticmethod
     def from_json(data):
         entry = IndexEntry()
-        for loc_data in data:
-            loc = IndexLoc.from_json(loc_data)
-            entry.add(loc)
+        for page_ref_data in data:
+            page_ref = IndexPageRef.from_json(page_ref_data)
+            entry.add_page_ref(page_ref)
         return entry
 
 
@@ -89,17 +89,21 @@ class PageIndex:
     def _load_index(self):
         start = time.monotonic()
 
+        # load index file
         if self.index_zip:
             with gzip.open(self.index_file, "rt") as fh:
                 data = json.load(fh)
         else:
             with open(self.index_file) as fh:
                 data = json.load(fh)
+
         # check version
         if VERSION_TAG not in data:
             return False
         if data[VERSION_TAG] != JSON_VERSION:
             return False
+
+        # load entries
         index = data["index"]
         self.index = {}
         for key, entry_data in index.items():
@@ -113,11 +117,13 @@ class PageIndex:
     def _save_index(self):
         start = time.monotonic()
 
+        # store entries and version
         index = {}
         for key, entry in self.index.items():
             index[key] = entry.to_json()
         data = {VERSION_TAG: JSON_VERSION, "index": index}
 
+        # save index file
         if self.index_zip:
             with gzip.open(self.index_file, "wt") as fh:
                 json.dump(data, fh)
@@ -134,15 +140,18 @@ class PageIndex:
         self.index = {}
         num_keys = 0
         num_pages = 0
+        # iterate over all books and its pages
         for doc in docs:
             book = doc.get_book()
             for page in book.get_pages().values():
-                # build index entry: cache file base name + page num in cache
+                # build index for page: cache file base name + page title in cache
                 cache_id = doc.get_cache_id()
                 page_title = page.get_title()
-                loc = IndexLoc(cache_id, page_title)
+                page_ref = IndexPageRef(cache_id, page_title)
+
                 # generate keys via key_func from page
                 keys = self.keys_func(page)
+
                 # add keys
                 for key in keys:
                     # new key?
@@ -150,7 +159,7 @@ class PageIndex:
                     if not entry:
                         entry = IndexEntry()
                         self.index[key] = entry
-                    entry.add(loc)
+                    entry.add_page_ref(page_ref)
                     num_keys += 1
                 num_pages += 1
 

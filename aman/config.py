@@ -14,6 +14,15 @@ AMAN_ENV_CACHE_VAR = "AMANCACHE"
 AMAN_ENV_MANPAGER_VAR = "MANPAGER"
 AMAN_ENV_PAGER_VAR = "PAGER"
 
+ENV_DESC = f"""
+enivornment variables:
+
+AMANPATH   list of autodoc directories, separated by '{os.pathsep}'
+AMANCACHE  directory of cache files ({AMAN_DEFAULT_CACHE_DIR})
+MANPAGER   or
+PAGER      set the default display program
+"""
+
 
 class Config:
     def __init__(self, config_file=None, use_env=True):
