@@ -202,8 +202,8 @@ class PageIndices:
 
     def _sanitize_entry(self, entry):
         e = entry.strip()
-        e = e.replace("()", "")
-        e = e.replace("(2)", "")
+        e = e.replace("()", "")  # remove functions
+        e = e.replace("(2)", "")  # some bsdsocket functions use this
         return e
 
     def add_see_also_index(self):
@@ -216,7 +216,6 @@ class PageIndices:
                 for entry in entries:
                     e = self._sanitize_entry(entry)
                     if e:
-                        print(e)
                         keys.append(e)
                 return keys
 
