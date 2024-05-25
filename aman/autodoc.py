@@ -165,7 +165,7 @@ class AutoDocSet:
         logging.debug("reolve: %s -> %s %s", page_ref, book, page)
         return page
 
-    def resolve_pages(self, page_refs):
+    def resolve_page_refs(self, page_refs):
         pages = []
         for page_ref in page_refs:
             page = self.resolve_page_ref(page_ref)

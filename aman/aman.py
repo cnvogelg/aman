@@ -36,9 +36,17 @@ def aman(
     # list only books
     if list_books:
         docs = doc_set.get_docs()
-        titles = map(lambda x: x.get_name(), docs)
-        for title in sorted(titles):
-            print(title)
+        lines = []
+        for doc in docs:
+            name = doc.get_name()
+            # add topics
+            topics = doc.get_book().get_topics()
+            if len(topics) > 1 or topics[0] != name:
+                entry = f"{name:20} {', '.join(topics)}"
+            else:
+                entry = name
+            lines.append(entry)
+        fmt.format_lines(sorted(lines))
         return 0
 
     # list only pages
@@ -46,8 +54,8 @@ def aman(
         doc = doc_set.find_doc(list_pages)
         if doc:
             book = doc.get_book()
-            for title in book.get_toc():
-                print(title)
+            lines = book.get_toc()
+            fmt.format_lines(lines)
             return 0
         else:
             print(f"doc book '{list_pages}' not found!")
@@ -105,13 +113,26 @@ def parse_args():
     mode_grp.add_argument(
         "-p",
         "--list-pages",
-        nargs="?",
         help="show available pages of a given book and quit",
     )
 
     # search
     search_grp = parser.add_argument_group("search options")
     search_grp.add_argument("keywords", nargs="*", help="keywords to search for")
+    search_grp.add_argument(
+        "-t",
+        "--topic",
+        action="store_true",
+        default=False,
+        help="search with 'topic/keyword'",
+    )
+    search_grp.add_argument(
+        "-s",
+        "--see-also",
+        action="store_true",
+        default=False,
+        help="search in SEE ALSO section",
+    )
 
     # output args
     output_grp = parser.add_argument_group("output options")
@@ -213,6 +234,10 @@ def main():
 
     # setup query
     query = Query()
+    if opts.topic:
+        query.set_mode(Query.QUERY_MODE_TOPIC_PAGE)
+    elif opts.see_also:
+        query.set_mode(Query.QUERY_MODE_SEE_ALSO)
 
     # call main
     result = aman(

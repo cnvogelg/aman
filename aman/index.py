@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import json
 import logging
@@ -153,15 +154,16 @@ class PageIndex:
                 keys = self.keys_func(page)
 
                 # add keys
-                for key in keys:
-                    # new key?
-                    entry = self.index.get(key)
-                    if not entry:
-                        entry = IndexEntry()
-                        self.index[key] = entry
-                    entry.add_page_ref(page_ref)
-                    num_keys += 1
-                num_pages += 1
+                if keys:
+                    for key in keys:
+                        # new key?
+                        entry = self.index.get(key)
+                        if not entry:
+                            entry = IndexEntry()
+                            self.index[key] = entry
+                        entry.add_page_ref(page_ref)
+                        num_keys += 1
+                    num_pages += 1
 
         end = time.monotonic()
         logging.info(
@@ -180,21 +182,45 @@ class PageIndices:
     def add_index(self, index):
         self.indices.append(index)
 
-    def add_long_title_index(self):
-        def key_long_title(page):
+    def add_topic_title_index(self):
+        def key_func(page):
             return [page.get_title()]
 
-        index = PageIndex("long_title", key_long_title)
+        index = PageIndex("topic_title", key_func)
         self.add_index(index)
         return index
 
-    def add_short_title_index(self):
-        def key_short_title(page):
+    def add_title_index(self):
+        def key_func(page):
             title = page.get_title()
             _, short = title.split("/")
             return [short]
 
-        index = PageIndex("short_title", key_short_title)
+        index = PageIndex("title", key_func)
+        self.add_index(index)
+        return index
+
+    def _sanitize_entry(self, entry):
+        e = entry.strip()
+        e = e.replace("()", "")
+        e = e.replace("(2)", "")
+        return e
+
+    def add_see_also_index(self):
+        def key_func(page):
+            see_also = page.find_section("SEE ALSO")
+            if see_also:
+                data = ", ".join(see_also)
+                entries = data.split(",")
+                keys = []
+                for entry in entries:
+                    e = self._sanitize_entry(entry)
+                    if e:
+                        print(e)
+                        keys.append(e)
+                return keys
+
+        index = PageIndex("see_also", key_func)
         self.add_index(index)
         return index
 

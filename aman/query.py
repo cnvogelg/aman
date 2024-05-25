@@ -1,10 +1,12 @@
+import logging
+
 from .index import PageIndices
 
 
 class Query:
     # with index
     QUERY_MODE_PAGE = 0
-    QUERY_MODE_BOOK_PAGE = 1
+    QUERY_MODE_TOPIC_PAGE = 1
     QUERY_MODE_SEE_ALSO = 2
 
     # without index
@@ -28,9 +30,14 @@ class Query:
 
     def setup(self, doc_set, cache_dir, force_rebuild, zip_index):
         if self.mode == self.QUERY_MODE_PAGE:
-            self.indices.add_short_title_index()
-        elif self.mode == self.QUERY_MODE_BOOK_PAGE:
-            self.indices.add_long_title_index()
+            logging.info("query mode: page")
+            self.indices.add_title_index()
+        elif self.mode == self.QUERY_MODE_TOPIC_PAGE:
+            logging.info("query mode: topic_page")
+            self.indices.add_topic_title_index()
+        elif self.mode == self.QUERY_MODE_SEE_ALSO:
+            logging.info("query mode: see_also")
+            self.indices.add_see_also_index()
 
         # setup index if any
         if self.indices:

@@ -9,7 +9,7 @@ from termcolor import colored
 
 class PrinterStdout:
     def write(self, data):
-        sys.sdtout.write(data)
+        sys.stdout.write(data)
 
     def close(self):
         pass
@@ -97,10 +97,11 @@ class Format:
         lines = []
         for page in pages:
             lines.append(page.get_title())
-        data = os.pathsep.join(lines)
-        printer = self._create_printer()
-        printer.write(data)
-        printer.close()
+        self.format_lines(lines)
+
+    def format_lines(self, lines):
+        data = os.linesep.join(lines)
+        self.format_data(data)
 
     def format_page(self, page):
         if self.output_format == self.OUTPUT_FORMAT_TEXT:
@@ -114,6 +115,9 @@ class Format:
             data["title"] = page.get_title()
             data = json.dumps(data, indent=4)
 
+        self.format_data(data)
+
+    def format_data(self, data):
         printer = self._create_printer()
         printer.write(data)
         printer.close()

@@ -2,6 +2,7 @@ class AutoDocBook:
     def __init__(self, file_name):
         self.file_name = file_name
         self.toc = []
+        self.topics = []
         self.pages = {}
 
     def __repr__(self):
@@ -11,8 +12,14 @@ class AutoDocBook:
         self.toc.append(title)
         self.pages[title] = page
 
+    def add_topic(self, topic):
+        self.topics.append(topic)
+
     def get_toc(self):
         return self.toc
+
+    def get_topics(self):
+        return self.topics
 
     def get_num_pages(self):
         return len(self.toc)
@@ -27,7 +34,7 @@ class AutoDocBook:
         pages = {}
         for name, page in self.pages.items():
             pages[name] = page.to_json()
-        return {"toc": self.toc, "pages": pages}
+        return {"toc": self.toc, "pages": pages, "topics": self.topics}
 
     def from_json(self, data):
         if "toc" not in data:
@@ -35,6 +42,7 @@ class AutoDocBook:
         if "pages" not in data:
             return False
         self.toc = data["toc"]
+        self.topics = data["topics"]
         self.pages = {}
         page_data = data["pages"]
         for title in self.toc:
@@ -97,6 +105,9 @@ class AutoDocPage:
 
     def get_section(self, title):
         return self.sections[title]
+
+    def find_section(self, title):
+        return self.sections.get(title)
 
     def get_sections(self):
         return self.sections

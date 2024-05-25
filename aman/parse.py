@@ -183,6 +183,9 @@ def parse_autodoc(file_name):
     # build autodoc
     doc = AutoDocBook(file_name)
 
+    # store topics, i.e. front part of title "foo/bar" -> topic is "foo"
+    topics = set()
+
     # parse sections
     toc_pos = 0
     while pos < num:
@@ -221,5 +224,13 @@ def parse_autodoc(file_name):
 
         # add to doc
         doc.add_page(exp_title, page)
+
+        # extract topic
+        topic, _ = exp_title.split("/")
+        topics.add(topic)
+
+    # add topics to document
+    for topic in sorted(topics):
+        doc.add_topic(topic)
 
     return doc
