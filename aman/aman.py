@@ -137,6 +137,17 @@ def parse_args():
         help="search in SEE ALSO section",
     )
     search_grp.add_argument(
+        "-f",
+        "--full-section",
+        help="full text search in given SECTION of page",
+    )
+    search_grp.add_argument(
+        "-F",
+        "--full-page",
+        action="store_true",
+        help="full text search in page",
+    )
+    search_grp.add_argument(
         "-B",
         "--limit-books",
         default=False,
@@ -179,7 +190,10 @@ def parse_args():
         "--dump-config", action="store_true", help="dump current config into file"
     )
     config_grp.add_argument(
-        "-f", "--force", action="store_true", help="force recreation of cache"
+        "-R",
+        "--rebuild-cache",
+        action="store_true",
+        help="force recreation of index cache",
     )
     config_grp.add_argument("-P", "--pager", help="pager command line")
 
@@ -261,6 +275,11 @@ def main():
         query.set_mode(Query.QUERY_MODE_TOPIC_PAGE)
     elif opts.see_also:
         query.set_mode(Query.QUERY_MODE_SEE_ALSO)
+    elif opts.full_section:
+        query.set_mode(Query.QUERY_MODE_FULL_SECTION)
+        query.set_section(opts.full_section)
+    elif opts.full_page:
+        query.set_mode(Query.QUERY_MODE_FULL_PAGE)
     if opts.limit_books:
         query.set_limit_books(opts.limit_books.split(":"))
     if opts.ignore_case:
@@ -272,7 +291,7 @@ def main():
         opts.keywords,
         query,
         fmt,
-        force_rebuild=opts.force,
+        force_rebuild=opts.rebuild_cache,
         all_pages=opts.all_pages,
         list_books=opts.list_books,
         list_pages=opts.list_pages,

@@ -104,6 +104,7 @@ class Format:
         self.format_data(data)
 
     def format_page(self, page):
+        logging.info("formatting page %s", page)
         if self.output_format == self.OUTPUT_FORMAT_TEXT:
             fmt = self._create_formatter()
             data = fmt.format_page(page)
