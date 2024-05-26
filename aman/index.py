@@ -59,9 +59,10 @@ class IndexEntry:
 
 
 class PageIndex:
-    def __init__(self, index_id, keys_func):
+    def __init__(self, index_id, keys_func, ignore_case=True):
         self.index_id = index_id
         self.keys_func = keys_func
+        self.ignore_case = ignore_case
         self.index = None
         self.index_file = None
         self.index_zip = False
@@ -85,6 +86,8 @@ class PageIndex:
         return len(self.index)
 
     def search(self, key):
+        if self.ignore_case:
+            key = key.lower()
         return self.index.get(key)
 
     def _load_index(self):
@@ -156,6 +159,9 @@ class PageIndex:
                 # add keys
                 if keys:
                     for key in keys:
+                        # ignore case -> lowercase
+                        if self.ignore_case:
+                            key = key.lower()
                         # new key?
                         entry = self.index.get(key)
                         if not entry:
