@@ -20,14 +20,12 @@ class AutoDoc:
         self.doc_mtime = doc_mtime
         self.cache_path = None
         self.cache_mtime = 0
-        self.cache_id = None
         self.cache_zip = False
         self.book = None
 
     def set_cache_file(self, cache_path, cache_mtime, cache_zip):
         self.cache_path = cache_path
         self.cache_mtime = cache_mtime
-        self.cache_id = os.path.basename(cache_path)
         self.cache_zip = cache_zip
 
     def get_name(self):
@@ -38,9 +36,6 @@ class AutoDoc:
 
     def get_cache_path(self):
         return self.cache_path
-
-    def get_cache_id(self):
-        return self.cache_id
 
     def is_cache_valid(self):
         return self.cache_mtime > self.doc_mtime
@@ -114,7 +109,7 @@ class AutoDocSet:
         self.index = None
         self.short_index = None
         self.cache_dir = None
-        self.cache_doc_map = {}
+        self.name_doc_map = {}
 
     def add_doc(self, doc):
         self.docs.append(doc)
@@ -143,8 +138,8 @@ class AutoDocSet:
         for doc in self.docs:
             was_valid = doc.setup_cache(force_rebuild)
             all_valid = all_valid and was_valid
-            # store mapping: cache_id -> doc
-            self.cache_doc_map[doc.get_cache_id()] = doc
+            # store mapping: name -> doc
+            self.name_doc_map[doc.get_name()] = doc
 
         end = time.monotonic()
         num_books = len(self.docs)
@@ -158,11 +153,11 @@ class AutoDocSet:
         return all_valid
 
     def resolve_page_ref(self, page_ref):
-        cache_id = page_ref.get_cache_id()
-        doc = self.cache_doc_map[cache_id]
+        doc_name = page_ref.get_doc_name()
+        doc = self.name_doc_map[doc_name]
         book = doc.get_book()
         page = book.get_page(page_ref.get_page_title())
-        logging.debug("reolve: %s -> %s %s", page_ref, book, page)
+        logging.debug("resolve: %s -> %s %s", page_ref, book, page)
         return page
 
     def resolve_page_refs(self, page_refs):

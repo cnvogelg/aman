@@ -133,6 +133,12 @@ def parse_args():
         default=False,
         help="search in SEE ALSO section",
     )
+    search_grp.add_argument(
+        "-B",
+        "--limit-books",
+        default=False,
+        help="only search in these books (list seperated by colon)",
+    )
 
     # output args
     output_grp = parser.add_argument_group("output options")
@@ -238,6 +244,8 @@ def main():
         query.set_mode(Query.QUERY_MODE_TOPIC_PAGE)
     elif opts.see_also:
         query.set_mode(Query.QUERY_MODE_SEE_ALSO)
+    if opts.limit_books:
+        query.set_limit_books(opts.limit_books.split(":"))
 
     # call main
     result = aman(

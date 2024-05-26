@@ -15,7 +15,7 @@ AMAN_ENV_MANPAGER_VAR = "MANPAGER"
 AMAN_ENV_PAGER_VAR = "PAGER"
 
 ENV_DESC = f"""
-enivornment variables:
+environment variables:
 
 AMANPATH   list of autodoc directories, separated by '{os.pathsep}'
 AMANCACHE  directory of cache files ({AMAN_DEFAULT_CACHE_DIR})

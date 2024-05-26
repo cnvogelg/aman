@@ -10,27 +10,27 @@ VERSION_TAG = "index_version"
 
 
 class IndexPageRef:
-    def __init__(self, cache_id, page_title):
-        self.cache_id = cache_id
+    def __init__(self, doc_name, page_title):
+        self.doc_name = doc_name
         self.page_title = page_title
 
     def __repr__(self):
-        return f"IndexPageRef({self.cache_id, self.page_title})"
+        return f"IndexPageRef({self.doc_name, self.page_title})"
 
-    def get_cache_id(self):
-        return self.cache_id
+    def get_doc_name(self):
+        return self.doc_name
 
     def get_page_title(self):
         return self.page_title
 
     def to_json(self):
-        return {"cache_id": self.cache_id, "page_title": self.page_title}
+        return {"doc_name": self.doc_name, "page_title": self.page_title}
 
     @staticmethod
     def from_json(data):
-        cache_id = data["cache_id"]
+        doc_name = data["doc_name"]
         page_title = data["page_title"]
-        return IndexPageRef(cache_id, page_title)
+        return IndexPageRef(doc_name, page_title)
 
 
 class IndexEntry:
@@ -145,10 +145,10 @@ class PageIndex:
         for doc in docs:
             book = doc.get_book()
             for page in book.get_pages().values():
-                # build index for page: cache file base name + page title in cache
-                cache_id = doc.get_cache_id()
+                # build page_ref: doc_name + page title
+                doc_name = doc.get_name()
                 page_title = page.get_title()
-                page_ref = IndexPageRef(cache_id, page_title)
+                page_ref = IndexPageRef(doc_name, page_title)
 
                 # generate keys via key_func from page
                 keys = self.keys_func(page)

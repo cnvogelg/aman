@@ -17,9 +17,13 @@ class Query:
         self.mode = self.QUERY_MODE_PAGE
         self.indices = PageIndices()
         self.search_func = self._search_index
+        self.limit_books = None
 
     def set_mode(self, mode):
         self.mode = mode
+
+    def set_limit_books(self, books):
+        self.limit_books = books
 
     def _search_index(self, keyword):
         entry = self.indices.search(keyword)
@@ -45,4 +49,10 @@ class Query:
 
     def search(self, keyword):
         """search for keyword and return one or more page_refs"""
-        return self.search_func(keyword)
+        page_refs = self.search_func(keyword)
+        if not self.limit_books:
+            return page_refs
+        else:
+            return list(
+                filter(lambda x: x.get_doc_name() in self.limit_books, page_refs)
+            )
