@@ -173,6 +173,9 @@ def parse_args():
     config_grp.add_argument("-C", "--cache-dir", help="directory for cache files")
     config_grp.add_argument("-c", "--config-file", help="config file")
     config_grp.add_argument(
+        "--dump-config", action="store_true", help="dump current config into file"
+    )
+    config_grp.add_argument(
         "-f", "--force", action="store_true", help="force recreation of cache"
     )
     config_grp.add_argument("-P", "--pager", help="pager command line")
@@ -216,6 +219,17 @@ def main():
         config.set_pager(None)
     elif opts.pager:
         config.set_pager(opts.pager)
+
+    # dump config?
+    if opts.dump_config:
+        # do not overwrite existing config
+        if os.path.exists(config_file):
+            print(f"dump config: don't overwrite existing config file '{config_file}'")
+            return 1
+        else:
+            print(f"dumping config to '{config_file}'")
+            config.dump(config_file)
+            return 0
 
     # check config
     if not config.finalize():

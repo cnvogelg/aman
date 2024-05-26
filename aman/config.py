@@ -78,6 +78,17 @@ class Config:
             self.pager = data[PAGER_TAG]
         return True
 
+    def dump(self, config_file):
+        data = {
+            VERSION_TAG: JSON_VERSION,
+            MAN_PATHS_TAG: self.man_paths,
+            CACHE_DIR_TAG: self.cache_dir,
+            PAGER_TAG: self.pager,
+        }
+        logging.info("config is: %s", data)
+        with open(config_file, "w") as fh:
+            json.dump(data, fh, indent=2)
+
     def add_man_path(self, man_path):
         self.man_paths.append(man_path)
 
