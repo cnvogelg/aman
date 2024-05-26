@@ -100,7 +100,7 @@ class Format:
         self.format_lines(lines)
 
     def format_lines(self, lines):
-        data = os.linesep.join(lines)
+        data = os.linesep.join(lines) + os.linesep
         self.format_data(data)
 
     def format_page(self, page):
