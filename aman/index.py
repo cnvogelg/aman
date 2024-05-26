@@ -59,7 +59,7 @@ class IndexEntry:
 
 
 class PageIndex:
-    def __init__(self, index_id, keys_func, ignore_case=True):
+    def __init__(self, index_id, keys_func, ignore_case=False):
         self.index_id = index_id
         self.keys_func = keys_func
         self.ignore_case = ignore_case
@@ -69,7 +69,10 @@ class PageIndex:
 
     def setup(self, docs, index_dir, force_rebuild=False, zip_index=False):
         # set cache file name
-        index_name = "_index_" + self.index_id + ".json"
+        index_name = "_index_" + self.index_id
+        if self.ignore_case:
+            index_name += "_ic"
+        index_name += ".json"
         if zip_index:
             index_name += ".gz"
         index_file = os.path.join(index_dir, index_name)
@@ -188,21 +191,21 @@ class PageIndices:
     def add_index(self, index):
         self.indices.append(index)
 
-    def add_topic_title_index(self):
+    def add_topic_title_index(self, ignore_case=True):
         def key_func(page):
             return [page.get_title()]
 
-        index = PageIndex("topic_title", key_func)
+        index = PageIndex("topic_title", key_func, ignore_case=ignore_case)
         self.add_index(index)
         return index
 
-    def add_title_index(self):
+    def add_title_index(self, ignore_case=True):
         def key_func(page):
             title = page.get_title()
             _, short = title.split("/")
             return [short]
 
-        index = PageIndex("title", key_func)
+        index = PageIndex("title", key_func, ignore_case=ignore_case)
         self.add_index(index)
         return index
 
@@ -212,7 +215,7 @@ class PageIndices:
         e = e.replace("(2)", "")  # some bsdsocket functions use this
         return e
 
-    def add_see_also_index(self):
+    def add_see_also_index(self, ignore_case=True):
         def key_func(page):
             see_also = page.find_section("SEE ALSO")
             if see_also:
@@ -225,7 +228,7 @@ class PageIndices:
                         keys.append(e)
                 return keys
 
-        index = PageIndex("see_also", key_func)
+        index = PageIndex("see_also", key_func, ignore_case=ignore_case)
         self.add_index(index)
         return index
 

@@ -157,7 +157,7 @@ class AutoDocSet:
         doc = self.name_doc_map[doc_name]
         book = doc.get_book()
         page = book.get_page(page_ref.get_page_title())
-        logging.debug("resolve: %s -> %s %s", page_ref, book, page)
+        logging.info("resolved page: %s -> %s %s", page_ref, book, page)
         return page
 
     def resolve_page_refs(self, page_refs):

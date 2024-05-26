@@ -18,12 +18,16 @@ class Query:
         self.indices = PageIndices()
         self.search_func = self._search_index
         self.limit_books = None
+        self.ignore_case = False
 
     def set_mode(self, mode):
         self.mode = mode
 
     def set_limit_books(self, books):
         self.limit_books = books
+
+    def set_ignore_case(self, ignore_case):
+        self.ignore_case = ignore_case
 
     def _search_index(self, keyword):
         entry = self.indices.search(keyword)
@@ -33,15 +37,16 @@ class Query:
             return None
 
     def setup(self, doc_set, cache_dir, force_rebuild, zip_index):
+        logging.info("query ignore case: %s", self.ignore_case)
         if self.mode == self.QUERY_MODE_PAGE:
             logging.info("query mode: page")
-            self.indices.add_title_index()
+            self.indices.add_title_index(self.ignore_case)
         elif self.mode == self.QUERY_MODE_TOPIC_PAGE:
             logging.info("query mode: topic_page")
-            self.indices.add_topic_title_index()
+            self.indices.add_topic_title_index(self.ignore_case)
         elif self.mode == self.QUERY_MODE_SEE_ALSO:
             logging.info("query mode: see_also")
-            self.indices.add_see_also_index()
+            self.indices.add_see_also_index(self.ignore_case)
 
         # setup index if any
         if self.indices:

@@ -119,6 +119,9 @@ def parse_args():
     # search
     search_grp = parser.add_argument_group("search options")
     search_grp.add_argument("keywords", nargs="*", help="keywords to search for")
+    mode_grp.add_argument(
+        "-i", "--ignore-case", action="store_true", help="ignore case in keyword match"
+    )
     search_grp.add_argument(
         "-t",
         "--topic",
@@ -143,7 +146,7 @@ def parse_args():
     # output args
     output_grp = parser.add_argument_group("output options")
     output_grp.add_argument(
-        "-n", "--no-pager", action="store_true", help="disable pager"
+        "-N", "--no-pager", action="store_true", help="disable pager"
     )
     output_grp.add_argument(
         "-j", "--json", action="store_true", help="output in json format"
@@ -260,6 +263,8 @@ def main():
         query.set_mode(Query.QUERY_MODE_SEE_ALSO)
     if opts.limit_books:
         query.set_limit_books(opts.limit_books.split(":"))
+    if opts.ignore_case:
+        query.set_ignore_case(True)
 
     # call main
     result = aman(
