@@ -47,9 +47,9 @@ You could also search for references (aka SEE ALSO) of a function name:
 
 ## Installation
 
-The `aman` tool can be installed with
+The `aman` tool can be installed with (note the different name):
 
-    pip install aman
+    pip install amiman
 
 The only step missing is to tell `aman` where the Amiga NDK autodocs are
 located:
