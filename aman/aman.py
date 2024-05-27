@@ -119,7 +119,7 @@ def parse_args():
     # search
     search_grp = parser.add_argument_group("search options")
     search_grp.add_argument("keywords", nargs="*", help="keywords to search for")
-    mode_grp.add_argument(
+    search_grp.add_argument(
         "-i", "--ignore-case", action="store_true", help="ignore case in keyword match"
     )
     search_grp.add_argument(
@@ -159,8 +159,12 @@ def parse_args():
     output_grp.add_argument(
         "-N", "--no-pager", action="store_true", help="disable pager"
     )
+    output_grp.add_argument("-P", "--pager", help="pager command line")
     output_grp.add_argument(
-        "-j", "--json", action="store_true", help="output in json format"
+        "-a",
+        "--all-pages",
+        action="store_true",
+        help="show multiple results as pages and no list",
     )
     output_grp.add_argument(
         "-r",
@@ -168,15 +172,12 @@ def parse_args():
         action="store_true",
         help="show raw page of autodoc otherwise reformat and colorize",
     )
-    output_grp.add_argument(
-        "-a",
-        "--all-pages",
-        action="store_true",
-        help="show multiple results as pages and no list",
-    )
     output_grp.add_argument("--color", action="store_true", help="use colorful output")
     output_grp.add_argument(
         "--no-color", action="store_true", help="disable colorful output"
+    )
+    output_grp.add_argument(
+        "-j", "--json", action="store_true", help="output in json format"
     )
 
     # config args
@@ -195,7 +196,6 @@ def parse_args():
         action="store_true",
         help="force recreation of index cache",
     )
-    config_grp.add_argument("-P", "--pager", help="pager command line")
 
     return parser.parse_args()
 
@@ -225,7 +225,6 @@ def main():
     if opts.man_path:
         man_paths = opts.man_path.split(os.pathsep)
         config.set_man_paths(man_paths)
-        man_path = opts.man_path
 
     # cache dir
     if opts.cache_dir:
